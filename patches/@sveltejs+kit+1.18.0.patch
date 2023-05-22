@@ -1,0 +1,58 @@
+diff --git a/node_modules/@sveltejs/kit/src/runtime/client/fetcher.js b/node_modules/@sveltejs/kit/src/runtime/client/fetcher.js
+index df709d1..4997769 100644
+--- a/node_modules/@sveltejs/kit/src/runtime/client/fetcher.js
++++ b/node_modules/@sveltejs/kit/src/runtime/client/fetcher.js
+@@ -75,6 +75,7 @@ const cache = new Map();
+  */
+ export function initial_fetch(resource, opts) {
+ 	const selector = build_selector(resource, opts);
++	console.log('[Sentry-debug] in initial_fetch for selector', selector);
+ 
+ 	const script = document.querySelector(selector);
+ 	if (script?.textContent) {
+@@ -83,9 +84,13 @@ export function initial_fetch(resource, opts) {
+ 		const ttl = script.getAttribute('data-ttl');
+ 		if (ttl) cache.set(selector, { body, init, ttl: 1000 * Number(ttl) });
+ 
++		console.log('[Sentry-debug] initial_fetch cache-hit: returning cached response for selector', selector);
++
+ 		return Promise.resolve(new Response(body, init));
+ 	}
+ 
++	console.log('[Sentry-debug] initial_fetch cache-miss: calling native_fetch for selector', selector);
++
+ 	return native_fetch(resource, opts);
+ }
+ 
+@@ -96,6 +101,7 @@ export function initial_fetch(resource, opts) {
+  * @param {RequestInit} [opts]
+  */
+ export function subsequent_fetch(resource, resolved, opts) {
++	console.log('[Sentry-debug] in subsequent_fetch');
+ 	if (cache.size > 0) {
+ 		const selector = build_selector(resource, opts);
+ 		const cached = cache.get(selector);
+@@ -105,13 +111,14 @@ export function subsequent_fetch(resource, resolved, opts) {
+ 				performance.now() < cached.ttl &&
+ 				['default', 'force-cache', 'only-if-cached', undefined].includes(opts?.cache)
+ 			) {
++				console.log('[Sentry-debug] subsequent_fetch cache-hit: returning cached response for selector', selector);
+ 				return new Response(cached.body, cached.init);
+ 			}
+ 
+ 			cache.delete(selector);
+ 		}
+ 	}
+-
++	console.log('[Sentry-debug] subsequent_fetch cache-miss: calling native_fetch for selector', selector);
+ 	return native_fetch(resolved, opts);
+ }
+ 
+@@ -140,5 +147,7 @@ function build_selector(resource, opts) {
+ 		selector += `[data-hash="${hash(...values)}"]`;
+ 	}
+ 
++	console.log('[Sentry-debug] cache selector is', selector);
++
+ 	return selector;
+ }
