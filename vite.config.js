@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [
     sentrySvelteKit({
       autoUploadSourceMaps: false,
-      autoInstrument: false,
+      autoInstrument: true,
     }),
     sveltekit(),
   ],

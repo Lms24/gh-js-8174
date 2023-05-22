@@ -1,38 +1,30 @@
-# create-svelte
+# GH 1847 Reproduction:
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+This sample app reproduces [a confirmed bug](https://github.com/getsentry/sentry-javascript/issues/8174) in the Sentry SvelteKit SDK.
 
-## Creating a project
+## Install
 
-If you're seeing this, you've probably already done this step. Congrats!
+To install and run, execute these commands in your terminal
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
-
-# create a new project in my-app
-npm create svelte@latest my-app
+```sh
+yarn 
+yarn build
+yarn preview
 ```
 
-## Developing
+## Reproducing the error
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+In `vite.config.js`, set `autoInstrument` to `true` 
 
-```bash
-npm run dev
+This will cause the Sentry tracing headers to be attached to outgoing requests, as configured in `tracePropagationTargets` in `hooks.client.js`.
+The added headers produce a cache-miss.
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+## Reproducing expected behavior
 
-## Building
+In `vite.config.js`, set  `autoInstrument` to `false` 
 
-To create a production version of your app:
+This will no longer attach the Sentry tracing headers to be attached to outgoing requests. Hence, the SDK doesn't cause a cache-miss anymore.
 
-```bash
-npm run build
-```
+## Notes
 
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+`patch-package` is used to add a few debug console log statements to SvelteKit's client `fetchers.js` file to easily observe the cache hits and misses.
